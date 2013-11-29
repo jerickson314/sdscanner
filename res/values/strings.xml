@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SD Scanner</string>
+    <string name="button_default">Set Default</string>
+    <string name="button_start">Start Rescan</string>
+    <string name="path_label">Path to rescan:"</string>
+    <string name="progress_unstarted_label">Not yet started.</string>
+    <string name="progress_phase1_label">Preparing initial list of files...</string>
+    <string name="processing">Processing </string>
+    <string name="title_activity_main">SD Scanner</string>
+</resources>
