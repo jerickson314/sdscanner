@@ -16,20 +16,19 @@
    version="1.1"
    inkscape:version="0.48.4 r9939"
    sodipodi:docname="launcher.svg"
-   inkscape:export-filename="/home/jerickso/android-workspace/sdscanner/res/playstore_launcher.png"
-   inkscape:export-xdpi="235.10204"
-   inkscape:export-ydpi="235.10204">
+   inkscape:export-filename="/home/jerickso/android-workspace/sdscanner/res/drawable-xhdpi/ic_launcher.png"
+   inkscape:export-xdpi="44.081635"
+   inkscape:export-ydpi="44.081635">
   <defs
      id="defs4">
     <linearGradient
-       inkscape:collect="always"
        id="linearGradient3876">
       <stop
-         style="stop-color:#00ffff;stop-opacity:1;"
+         style="stop-color:#00ffff;stop-opacity:0.78431374;"
          offset="0"
          id="stop3878" />
       <stop
-         style="stop-color:#00ffff;stop-opacity:0;"
+         style="stop-color:#00ffff;stop-opacity:0.29411766;"
          offset="1"
          id="stop3880" />
     </linearGradient>
@@ -111,17 +110,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.3010204"
-     inkscape:cx="98"
+     inkscape:cx="49.681607"
      inkscape:cy="97.848532"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      width="196px"
-     inkscape:window-width="698"
-     inkscape:window-height="446"
-     inkscape:window-x="794"
-     inkscape:window-y="148"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1440"
+     inkscape:window-height="856"
+     inkscape:window-x="-4"
+     inkscape:window-y="21"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -140,7 +139,7 @@
      id="layer1"
      transform="translate(0,-856.3622)">
     <path
-       style="fill:url(#radialGradient3848);fill-opacity:1;stroke:#000080;stroke-width:1.91199994;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:url(#radialGradient3848);fill-opacity:1;stroke:#00ffff;stroke-width:1.912;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 74.227637,876.67214 0,131.99996 99.000003,0 0,-113.12496 -18.875,-18.875 -80.125003,0 z"
        id="rect2985"
        inkscape:connector-curvature="0" />
@@ -196,7 +195,7 @@
        sodipodi:cy="78.00618"
        sodipodi:rx="34.686245"
        sodipodi:ry="34.686245"
-       d="m 122.99228,78.00618 a 34.686245,34.686245 0 1 1 -69.372495,0 34.686245,34.686245 0 1 1 69.372495,0 z"
+       d="m 122.99228,78.00618 c 0,19.156684 -15.52957,34.68624 -34.68625,34.68624 -19.156684,0 -34.686245,-15.529556 -34.686245,-34.68624 0,-19.156684 15.529561,-34.686245 34.686245,-34.686245 19.15668,0 34.68625,15.529561 34.68625,34.686245 z"
        transform="translate(5.1499227,849.39466)" />
     <path
        style="fill:none;stroke:#666666;stroke-width:6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
