@@ -17,31 +17,55 @@
 package com.gmail.jerickson314.sdscanner;
 
 import android.app.Activity;
-import android.media.MediaScannerConnection;
+import android.app.FragmentManager;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
 
 public class MainActivity extends Activity
+        implements ScanFragment.ScanProgressCallbacks
 {
-    ArrayList<String> mPathNames;
-    int mLastGoodProcessedIndex = -1;
+    ScanFragment mScanFragment;
 
-    private Handler mHandler = new Handler();
+    @Override
+    public void updateProgressNum(int progressNum) {
+        ProgressBar progressBar = (ProgressBar)findViewById(R.id.progress_bar);
+        progressBar.setProgress(progressNum);
+    }
 
-    public void setDefault() {
+    @Override
+    public void updateProgressText(String progressText) {
+        TextView progressLabel = (TextView)findViewById(R.id.progress_label);
+        progressLabel.setText(progressText);
+    }
+
+    @Override
+    public void updateDebugMessages(String debugMessages) {
+        TextView debugLabel = (TextView)findViewById(R.id.debug_label);
+        debugLabel.setText(debugMessages);
+    }
+
+    @Override
+    public void updatePath(String path) {
         EditText pathText = (EditText) findViewById(R.id.path_widget);
-        pathText.setText(
-                Environment.getExternalStorageDirectory().getAbsolutePath());
+        pathText.setText(path);
+    }
+
+    @Override
+    public void updateStartButtonEnabled(boolean startButtonEnabled) { 
+        Button startButton = (Button)findViewById(R.id.start_button);
+        startButton.setEnabled(startButtonEnabled);
     }
 
     /** Called when the activity is first created. */
@@ -50,87 +74,43 @@ public class MainActivity extends Activity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        setDefault();
-    }
 
-    public void defaultButtonPressed(View view) {
-        setDefault();
-    }
+        FragmentManager fm = getFragmentManager();
+        mScanFragment = (ScanFragment) fm.findFragmentByTag("scan");
 
-    public void startButtonPressed(View view) {
-        Button startButton = (Button)findViewById(R.id.start_button);
-        startButton.setEnabled(false);
-        TextView progressLabel = (TextView)findViewById(R.id.progress_label);
-        progressLabel.setText(R.string.progress_phase1_label);
-        EditText pathText = (EditText) findViewById(R.id.path_widget);
-        String path = pathText.getText().toString();
-        mPathNames = recursiveListFiles(new File(path));
-        MediaScannerConnection.scanFile(
-            getApplicationContext(),
-            mPathNames.toArray(new String[mPathNames.size()]),
-            null,
-            this.new ProgressListener());
-    }
+        if (mScanFragment == null) {
+            mScanFragment = new ScanFragment();
+            fm.beginTransaction().add(mScanFragment, "scan").commit();
+        }
         
-    private ArrayList<String> recursiveListFiles(File directory) {
-        ArrayList<String> toReturn = new ArrayList<String>();
-        for (File file : directory.listFiles()) {
-            if (file.isDirectory()) {
-                toReturn.addAll(recursiveListFiles(file));
-            }
-            else {
-                toReturn.add(file.getAbsolutePath());
-            }
-        }
-        return toReturn;
+        // Setup with values from fragment.
+        updateProgressNum(mScanFragment.getProgressNum());
+        updateProgressText(mScanFragment.getProgressText());
+        updateDebugMessages(mScanFragment.getDebugMessages());
+        updatePath(mScanFragment.getPath());
+        updateStartButtonEnabled(mScanFragment.getStartButtonEnabled());
+
+        // Make debug output scrollable.
+        TextView debugLabel = (TextView)findViewById(R.id.debug_label);
+        debugLabel.setMovementMethod(new ScrollingMovementMethod());
     }
 
-    class ProgressListener
-            implements MediaScannerConnection.OnScanCompletedListener {
-        @Override
-        public void onScanCompleted(String path, Uri uri) {
-            mHandler.post(new Updater(path));
-        }
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        EditText pathText = (EditText) findViewById(R.id.path_widget);
+        mScanFragment.setPath(pathText.getText().toString());
     }
 
-    class Updater implements Runnable {
-        String mPath;
-
-        public Updater(String path) {
-            mPath = path;
-        }
-
-        public void run() {
-            if (mPathNames.get(mLastGoodProcessedIndex
-                              + 1).equals(mPath)) {
-                mLastGoodProcessedIndex++;
-            }
-            else {
-                int newIndex = mPathNames.indexOf(mPath);
-                if (newIndex > -1) {
-                    mLastGoodProcessedIndex = newIndex;
-                }
-            }
-            int progress = (100 * (mLastGoodProcessedIndex + 1))
-                           / mPathNames.size();
-            ProgressBar progressBar =
-                    (ProgressBar)findViewById(R.id.progress_bar);
-            TextView progressLabel =
-                    (TextView)findViewById(R.id.progress_label);
-            if (progress == 100) {
-                Button startButton =
-                        (Button)findViewById(R.id.start_button);
-                startButton.setEnabled(true);
-                progressBar.setProgress(0);
-                progressLabel.setText(getString(
-                        R.string.progress_unstarted_label));
-            }
-            else {
-                progressBar.setProgress(progress);
-
-                progressLabel.setText(getString(R.string.processing)
-                                      + " " + mPath);
-            }
-        }
+    public void defaultButtonPressed(View view) throws IOException {
+        updatePath(Environment.getExternalStorageDirectory().getCanonicalPath());
     }
+
+    public void startButtonPressed(View view) throws IOException {
+        EditText pathText = (EditText) findViewById(R.id.path_widget);
+        File path = new File(pathText.getText().toString());
+
+        mScanFragment.startScan(path.getCanonicalFile());
+    }
+
 }
