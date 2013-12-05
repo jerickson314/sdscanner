@@ -3,14 +3,14 @@
  *
  * This file contains the fragment that actually performs all scan activity
  * and retains state across configuration changes.
- * 
+ *
  * Copyright (C) 2013 Jeremy Erickson
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,6 +30,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 
 import java.io.File;
@@ -44,10 +45,11 @@ public class ScanFragment extends Fragment {
 
     private static final String[] MEDIA_PROJECTION =
         {MediaStore.MediaColumns.DATA,
-         MediaStore.MediaColumns.DATE_MODIFIED,
-         MediaStore.MediaColumns._ID};
+         MediaStore.MediaColumns.DATE_MODIFIED};
 
     private static final String[] STAR = {"*"};
+
+    private static final int DB_RETRIES = 3;
 
     ArrayList<String> mPathNames;
     TreeSet<File> mFilesToProcess;
@@ -92,6 +94,13 @@ public class ScanFragment extends Fragment {
         mDebugMessages.append(debugMessage + "\n");
         if (mCallbacks != null) {
             mCallbacks.updateDebugMessages(mDebugMessages.toString());
+        }
+    }
+
+    private void resetDebugMessages() {
+        mDebugMessages = new StringBuilder();
+        if (mCallbacks != null) {
+            mCallbacks.updateDebugMessages("");
         }
     }
 
@@ -189,12 +198,12 @@ public class ScanFragment extends Fragment {
                 });
         }
     }
-    
+
     public void startScan(File path) {
         updateStartButtonEnabled(false);
         updateProgressText(getString(R.string.progress_filelist_label));
         mFilesToProcess = new TreeSet<File>();
-        mDebugMessages = new StringBuilder();
+        resetDebugMessages();
         if (path.exists()) {
             this.new PreprocessTask().execute(path);
         }
@@ -237,20 +246,11 @@ public class ScanFragment extends Fragment {
             mFilesToProcess.add(file.getCanonicalFile());
         }
 
-        @Override
-        protected Void doInBackground(File... files) {
-            try {
-                recursiveAddFiles(files[0]);
-            }
-            catch (IOException Ex) {
-                // Do nothing.
-            }
-            // Parse database
-            publishProgress("State", getString(R.string.progress_database_label));
+        protected void dbOneTry() {
             Cursor cursor = getActivity().getContentResolver().query(
                     MediaStore.Files.getContentUri("external"),
-                    //MEDIA_PROJECTION,
-                    STAR,
+                    MEDIA_PROJECTION,
+                    //STAR,
                     null,
                     null,
                     null);
@@ -258,15 +258,11 @@ public class ScanFragment extends Fragment {
                     cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
             int modified_column =
                     cursor.getColumnIndex(MediaStore.MediaColumns.DATE_MODIFIED);
-            int id_column =
-                    cursor.getColumnIndex(MediaStore.MediaColumns._ID);
             int totalSize = cursor.getCount();
             int currentItem = 0;
             int reportFreq = 0;
-            // Manually delete things where .nomedia is the reason.
-            ArrayList<DeletionEntry> toDelete = new ArrayList<DeletionEntry>();
             // Used to calibrate reporting frequency
-            long startTime = System.currentTimeMillis();
+            long startTime = SystemClock.currentThreadTimeMillis();
             while (cursor.moveToNext()) {
                 currentItem++;
                 try {
@@ -285,7 +281,7 @@ public class ScanFragment extends Fragment {
                     }
                     if (reportFreq == 0) {
                         // Calibration phase
-                        if (System.currentTimeMillis() - startTime > 25) {
+                        if (SystemClock.currentThreadTimeMillis() - startTime > 25) {
                             reportFreq = currentItem + 1;
                         }
                     }
@@ -302,7 +298,46 @@ public class ScanFragment extends Fragment {
             }
             // Don't need the cursor any more.
             cursor.close();
+        }
 
+        @Override
+        protected Void doInBackground(File... files) {
+            try {
+                recursiveAddFiles(files[0]);
+            }
+            catch (IOException Ex) {
+                // Do nothing.
+            }
+            // Parse database
+            publishProgress("State", getString(R.string.progress_database_label));
+            boolean dbSuccess = false;
+            int numRetries = 0;
+            while (!dbSuccess && numRetries < DB_RETRIES) {
+                dbSuccess = true;
+                try {
+                    dbOneTry();
+                }
+                catch (Exception Ex) {
+                    // For any of these errors, try again.
+                    numRetries++;
+                    dbSuccess = false;
+                    if (numRetries < DB_RETRIES) {
+                        publishProgress("State",
+                                getString(R.string.db_error_retrying));
+                        SystemClock.sleep(1000);
+                    }
+                }
+            }
+            if (numRetries > 0) {
+                if (dbSuccess) {
+                    publishProgress("Debug",
+                                    getString(R.string.db_error_recovered));
+                }
+                else {
+                    publishProgress("Debug",
+                                    getString(R.string.db_error_failure));
+                }
+            }
             // Prepare final path list for processing.
             mPathNames = new ArrayList<String>(mFilesToProcess.size());
             Iterator<File> iterator = mFilesToProcess.iterator();
