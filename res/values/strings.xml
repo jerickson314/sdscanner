@@ -5,8 +5,8 @@
     <string name="button_start">Start Rescan</string>
     <string name="database_proc">Examined</string>
     <string name="delete_proc">Removed reference to</string>
-    <string name="db_label">Will also check existing media database for updated files.</string>
-    <string name="db_error_failure">Encountered error reading media database, and might miss updated files or rescan up-to-date files.</string>
+    <string name="db_label">Will also check existing media database for updated or deleted files.</string>
+    <string name="db_error_failure">Encountered error reading media database, and might miss updated or deleted files or rescan up-to-date files.</string>
     <string name="db_error_recovered">Encountered error reading media database, but recovered.</string>
     <string name="db_error_retrying">Encountered error reading media database.  Retrying in 1 second...</string>
     <string name="final_proc">Processed</string>

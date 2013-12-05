@@ -234,16 +234,20 @@ public class ScanFragment extends Fragment {
 
         private void recursiveAddFiles(File file)
                 throws IOException {
+            if (mFilesToProcess.contains(file)) {
+                // Avoid infinite recursion caused by symlinks.
+                return;
+            }
+            mFilesToProcess.add(file);
             if (file.isDirectory()) {
                 boolean nomedia = new File(file, ".nomedia").exists();
                 // Only recurse downward if not blocked by nomedia.
                 if (!nomedia) {
                     for (File nextFile : file.listFiles()) {
-                        recursiveAddFiles(nextFile);
+                        recursiveAddFiles(nextFile.getCanonicalFile());
                     }
                 }
             }
-            mFilesToProcess.add(file.getCanonicalFile());
         }
 
         protected void dbOneTry() {
@@ -303,7 +307,7 @@ public class ScanFragment extends Fragment {
         @Override
         protected Void doInBackground(File... files) {
             try {
-                recursiveAddFiles(files[0]);
+                recursiveAddFiles(files[0].getCanonicalFile());
             }
             catch (IOException Ex) {
                 // Do nothing.
