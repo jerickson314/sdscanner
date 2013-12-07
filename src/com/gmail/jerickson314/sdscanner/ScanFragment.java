@@ -22,6 +22,8 @@ package com.gmail.jerickson314.sdscanner;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.ContentUris;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.media.MediaScannerConnection;
@@ -60,7 +62,6 @@ public class ScanFragment extends Fragment {
     int mProgressNum;
     String mProgressText;
     StringBuilder mDebugMessages;
-    String mPath;
     boolean mStartButtonEnabled;
 
     /**
@@ -111,10 +112,6 @@ public class ScanFragment extends Fragment {
         }
     }
 
-    public void setPath(String path) {
-        mPath = path;
-    }
-
     public int getProgressNum() {
         return mProgressNum;
     }
@@ -125,10 +122,6 @@ public class ScanFragment extends Fragment {
 
     public String getDebugMessages() {
         return mDebugMessages.toString();
-    }
-
-    public String getPath() {
-        return mPath;
     }
 
     public boolean getStartButtonEnabled() {
@@ -147,12 +140,6 @@ public class ScanFragment extends Fragment {
         // Set correct initial values.
         mProgressNum = 0;
         mDebugMessages = new StringBuilder();
-        try {
-            mPath = Environment.getExternalStorageDirectory().getCanonicalPath();
-        }
-        catch (IOException Ex) {
-            // Do nothing.
-        }
         mStartButtonEnabled = true;
     }
 
@@ -215,30 +202,14 @@ public class ScanFragment extends Fragment {
 
     class PreprocessTask extends AsyncTask<File, String, Void> {
 
-        class DeletionEntry {
-            String mPath;
-            int mId;
-            public DeletionEntry(String path, int id) {
-                mPath = path;
-                mId = id;
-            }
-
-            public String getPath() {
-                return mPath;
-            }
-
-            public int getId() {
-                return mId;
-            }
-        }
-
         private void recursiveAddFiles(File file)
                 throws IOException {
-            if (mFilesToProcess.contains(file)) {
+            if (!mFilesToProcess.add(file)) {
                 // Avoid infinite recursion caused by symlinks.
+                // If mFilesToProcess already contains this file, add() will 
+                // return false.
                 return;
             }
-            mFilesToProcess.add(file);
             if (file.isDirectory()) {
                 boolean nomedia = new File(file, ".nomedia").exists();
                 // Only recurse downward if not blocked by nomedia.

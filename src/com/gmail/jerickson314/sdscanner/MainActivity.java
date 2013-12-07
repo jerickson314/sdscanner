@@ -18,6 +18,8 @@ package com.gmail.jerickson314.sdscanner;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.os.Bundle;
@@ -87,8 +89,18 @@ public class MainActivity extends Activity
         updateProgressNum(mScanFragment.getProgressNum());
         updateProgressText(mScanFragment.getProgressText());
         updateDebugMessages(mScanFragment.getDebugMessages());
-        updatePath(mScanFragment.getPath());
         updateStartButtonEnabled(mScanFragment.getStartButtonEnabled());
+
+        // Update path from preferences
+        SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
+        try {
+            updatePath(preferences.getString("path",
+                 Environment.getExternalStorageDirectory().getCanonicalPath()));
+        }
+        catch (IOException Ex) {
+            // Should never happen, but getCanonicalPath() declares the throw.
+            updatePath("");
+        }
 
         // Make debug output scrollable.
         TextView debugLabel = (TextView)findViewById(R.id.debug_label);
@@ -96,10 +108,16 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
+    public void onStop() {
+        super.onStop();
+
+        // Write setting to preferences
         EditText pathText = (EditText) findViewById(R.id.path_widget);
-        mScanFragment.setPath(pathText.getText().toString());
+
+        SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("path", pathText.getText().toString());
+        editor.commit();
     }
 
     public void defaultButtonPressed(View view) throws IOException {
