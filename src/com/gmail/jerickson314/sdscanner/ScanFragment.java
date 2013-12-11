@@ -214,8 +214,16 @@ public class ScanFragment extends Fragment {
                 boolean nomedia = new File(file, ".nomedia").exists();
                 // Only recurse downward if not blocked by nomedia.
                 if (!nomedia) {
-                    for (File nextFile : file.listFiles()) {
-                        recursiveAddFiles(nextFile.getCanonicalFile());
+                    File[] files = file.listFiles();
+                    if (files != null) {
+                        for (File nextFile : files) {
+                            recursiveAddFiles(nextFile.getCanonicalFile());
+                        }
+                    }
+                    else {
+                        publishProgress("Debug",
+                                getString(R.string.skipping_folder_label) +
+                                " " + file.getPath());
                     }
                 }
             }
