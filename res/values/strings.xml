@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SD Scanner</string>
-    <string name="button_default">Default</string>
     <string name="button_start">Start Rescan</string>
     <string name="database_proc">Examined</string>
     <string name="delete_proc">Removed reference to</string>
