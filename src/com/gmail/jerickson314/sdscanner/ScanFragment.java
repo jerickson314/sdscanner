@@ -34,6 +34,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -204,6 +205,13 @@ public class ScanFragment extends Fragment {
 
         private void recursiveAddFiles(File file)
                 throws IOException {
+            if (file.equals(new File("/storage")) ||
+                    file.equals(new File("/system"))) {
+                // Don't scan a symlink that gives you all of "/storage" or
+                // "/system".  May be dangerous!
+                Log.w("SDScanner", "Skipping scan of " + file.toString());
+                return;
+            }
             if (!mFilesToProcess.add(file)) {
                 // Avoid infinite recursion caused by symlinks.
                 // If mFilesToProcess already contains this file, add() will 
@@ -211,6 +219,11 @@ public class ScanFragment extends Fragment {
                 return;
             }
             if (file.isDirectory()) {
+                // Debug check.
+                if (new File(file, "emulated").exists()) {
+                    Log.w("SDScanner", "Path " + file.getCanonicalPath() +
+                          " contains 'emulated' and might be /storage");
+                }
                 boolean nomedia = new File(file, ".nomedia").exists();
                 // Only recurse downward if not blocked by nomedia.
                 if (!nomedia) {

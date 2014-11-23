@@ -36,6 +36,15 @@
         android:paddingBottom="4dp"
         android:gravity="center_vertical"
         android:text="@string/db_label" />
+    <Button
+        android:id="@+id/start_button"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:text="@string/button_start"
+        android:onClick="startButtonPressed">
+        <requestFocus />
+    </Button>
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
         android:max="100"
@@ -56,12 +65,5 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="" />
-    <Button
-        android:id="@+id/start_button"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:text="@string/button_start"
-        android:onClick="startButtonPressed" />
 </LinearLayout>
 
