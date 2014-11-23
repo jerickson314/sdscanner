@@ -4,7 +4,7 @@
  * This file contains the fragment that actually performs all scan activity
  * and retains state across configuration changes.
  *
- * Copyright (C) 2013 Jeremy Erickson
+ * Copyright (C) 2013-2014 Jeremy Erickson
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,8 +61,8 @@ public class ScanFragment extends Fragment {
     private Handler mHandler = new Handler();
 
     int mProgressNum;
-    String mProgressText;
-    StringBuilder mDebugMessages;
+    UIStringGenerator mProgressText = new UIStringGenerator();
+    UIStringGenerator mDebugMessages = new UIStringGenerator();
     boolean mStartButtonEnabled;
     boolean mHasStarted = false;
 
@@ -71,8 +71,8 @@ public class ScanFragment extends Fragment {
      */
     static interface ScanProgressCallbacks {
         void updateProgressNum(int progressNum);
-        void updateProgressText(String progressText);
-        void updateDebugMessages(String debugMessages);
+        void updateProgressText(UIStringGenerator progressText);
+        void updateDebugMessages(UIStringGenerator debugMessages);
         void updatePath(String path);
         void updateStartButtonEnabled(boolean startButtonEnabled);
         void signalFinished();
@@ -87,24 +87,40 @@ public class ScanFragment extends Fragment {
         }
     }
 
-    private void updateProgressText(String progressText) {
+    private void updateProgressText(int resId) {
+        updateProgressText(new UIStringGenerator(resId));
+    }
+
+    private void updateProgressText(int resId, String string) {
+        updateProgressText(new UIStringGenerator(resId, string));
+    }
+
+    private void updateProgressText(UIStringGenerator progressText) {
         mProgressText = progressText;
         if (mCallbacks != null) {
             mCallbacks.updateProgressText(mProgressText);
         }
     }
 
-    private void addDebugMessage(String debugMessage) {
-        mDebugMessages.append(debugMessage + "\n");
+    private void addDebugMessage(int resId, String string) {
+        mDebugMessages.addSubGenerator(resId);
+        mDebugMessages.addSubGenerator(string + "\n");
         if (mCallbacks != null) {
-            mCallbacks.updateDebugMessages(mDebugMessages.toString());
+            mCallbacks.updateDebugMessages(mDebugMessages);
+        }
+    }
+
+    private void addDebugMessage(String debugMessage) {
+        mDebugMessages.addSubGenerator(debugMessage + "\n");
+        if (mCallbacks != null) {
+            mCallbacks.updateDebugMessages(mDebugMessages);
         }
     }
 
     private void resetDebugMessages() {
-        mDebugMessages = new StringBuilder();
+        mDebugMessages = new UIStringGenerator();
         if (mCallbacks != null) {
-            mCallbacks.updateDebugMessages("");
+            mCallbacks.updateDebugMessages(mDebugMessages);
         }
     }
 
@@ -125,12 +141,12 @@ public class ScanFragment extends Fragment {
         return mProgressNum;
     }
 
-    public String getProgressText() {
+    public UIStringGenerator getProgressText() {
         return mProgressText;
     }
 
-    public String getDebugMessages() {
-        return mDebugMessages.toString();
+    public UIStringGenerator getDebugMessages() {
+        return mDebugMessages;
     }
 
     public boolean getStartButtonEnabled() {
@@ -152,7 +168,6 @@ public class ScanFragment extends Fragment {
 
         // Set correct initial values.
         mProgressNum = 0;
-        mDebugMessages = new StringBuilder();
         mStartButtonEnabled = true;
     }
 
@@ -162,9 +177,11 @@ public class ScanFragment extends Fragment {
 
         // Retain this fragment across configuration changes.
         setRetainInstance(true);
-        updateProgressText(getString(R.string.progress_unstarted_label));
+        updateProgressText(R.string.progress_unstarted_label);
     }
 
+    // Purely for debugging and not normally used, so does not translate
+    // strings.
     public void listPathNamesOnDebug() {
         StringBuffer listString = new StringBuffer();
         listString.append("\n\nScanning paths:\n");
@@ -177,7 +194,7 @@ public class ScanFragment extends Fragment {
 
     public void scannerEnded() {
         updateProgressNum(0);
-        updateProgressText(getString(R.string.progress_completed_label));
+        updateProgressText(R.string.progress_completed_label);
         updateStartButtonEnabled(true);
         signalFinished();
     }
@@ -203,20 +220,75 @@ public class ScanFragment extends Fragment {
     public void startScan(File path) {
         mHasStarted = true;
         updateStartButtonEnabled(false);
-        updateProgressText(getString(R.string.progress_filelist_label));
+        updateProgressText(R.string.progress_filelist_label);
         mFilesToProcess = new TreeSet<File>();
         resetDebugMessages();
         if (path.exists()) {
             this.new PreprocessTask().execute(path);
         }
         else {
-            updateProgressText(getString(R.string.progress_error_bad_path_label));
+            updateProgressText(R.string.progress_error_bad_path_label);
             updateStartButtonEnabled(true);
             signalFinished();
         }
     }
 
-    class PreprocessTask extends AsyncTask<File, String, Void> {
+    static class ProgressUpdate {
+        public enum Type {
+            DATABASE, STATE, DEBUG
+        }
+
+        Type mType;
+
+        public Type getType() {
+            return mType;
+        }
+
+        int mResId;
+
+        public int getResId() {
+            return mResId;
+        }
+
+        String mString;
+
+        public String getString() {
+            return mString;
+        }
+
+        int mProgress;
+
+        public int getProgress() {
+            return mProgress;
+        }
+
+        public ProgressUpdate(Type type, int resId, String string,
+                              int progress) {
+            mType = type;
+            mResId = resId;
+            mString = string;
+            mProgress = progress;
+        }
+    }
+
+    static ProgressUpdate debugUpdate(int resId, String string) {
+        return new ProgressUpdate(ProgressUpdate.Type.DEBUG, resId, string, 0);
+    }
+
+    static ProgressUpdate debugUpdate(int resId) {
+        return debugUpdate(resId, "");
+    }
+
+    static ProgressUpdate databaseUpdate(String file, int progress) {
+        return new ProgressUpdate(ProgressUpdate.Type.DATABASE, 0, file,
+                                  progress);
+    }
+
+    static ProgressUpdate stateUpdate(int resId) {
+        return new ProgressUpdate(ProgressUpdate.Type.STATE, resId, "", 0);
+    }
+
+    class PreprocessTask extends AsyncTask<File, ProgressUpdate, Void> {
 
         private void recursiveAddFiles(File file)
                 throws IOException {
@@ -249,9 +321,9 @@ public class ScanFragment extends Fragment {
                         }
                     }
                     else {
-                        publishProgress("Debug",
-                                getString(R.string.skipping_folder_label) +
-                                " " + file.getPath());
+                        publishProgress(debugUpdate(
+                                R.string.skipping_folder_label,
+                                " " + file.getPath()));
                     }
                 }
             }
@@ -297,10 +369,8 @@ public class ScanFragment extends Fragment {
                         }
                     }
                     else if (currentItem % reportFreq == 0) {
-                        publishProgress("Database",
-                                        file.getPath(),
-                                        Integer.toString((100 * currentItem)
-                                                         / totalSize));
+                        publishProgress(databaseUpdate(file.getPath(),
+                                        (100 * currentItem) / totalSize));
                     }
                 }
                 catch (IOException ex) {
@@ -320,7 +390,7 @@ public class ScanFragment extends Fragment {
                 // Do nothing.
             }
             // Parse database
-            publishProgress("State", getString(R.string.progress_database_label));
+            publishProgress(stateUpdate(R.string.progress_database_label));
             boolean dbSuccess = false;
             int numRetries = 0;
             while (!dbSuccess && numRetries < DB_RETRIES) {
@@ -333,20 +403,18 @@ public class ScanFragment extends Fragment {
                     numRetries++;
                     dbSuccess = false;
                     if (numRetries < DB_RETRIES) {
-                        publishProgress("State",
-                                getString(R.string.db_error_retrying));
+                        publishProgress(stateUpdate(
+                                R.string.db_error_retrying));
                         SystemClock.sleep(1000);
                     }
                 }
             }
             if (numRetries > 0) {
                 if (dbSuccess) {
-                    publishProgress("Debug",
-                                    getString(R.string.db_error_recovered));
+                    publishProgress(debugUpdate(R.string.db_error_recovered));
                 }
                 else {
-                    publishProgress("Debug",
-                                    getString(R.string.db_error_failure));
+                    publishProgress(debugUpdate(R.string.db_error_failure));
                 }
             }
             // Prepare final path list for processing.
@@ -361,24 +429,19 @@ public class ScanFragment extends Fragment {
         }
 
         @Override
-        protected void onProgressUpdate(String... progress) {
-            String startText = "";
-            if (progress[0].equals("Database")) {
-                startText = getString(R.string.database_proc);
-                updateProgressText(startText + " " + progress[1]);
-                updateProgressNum(Integer.parseInt(progress[2]));
-            }
-            else if (progress[0].equals("Delete")) {
-                startText = getString(R.string.delete_proc);
-                updateProgressText(startText + " " + progress[1]);
-                updateProgressNum(Integer.parseInt(progress[2]));
-            }
-            else if (progress[0].equals("State")) {
-                updateProgressText(progress[1]);
+        protected void onProgressUpdate(ProgressUpdate... progress) {
+            switch (progress[0].getType()) {
+            case DATABASE:
+                updateProgressText(R.string.database_proc,
+                                   " " + progress[0].getString());
+                updateProgressNum(progress[0].getProgress());
+                break;
+            case STATE:
+                updateProgressText(progress[0].getResId());
                 updateProgressNum(0);
-            }
-            else if (progress[0].equals("Debug")) {
-                addDebugMessage(progress[1]);
+                break;
+            case DEBUG:
+                addDebugMessage(progress[0].getResId(), progress[0].getString());
             }
         }
 
@@ -414,8 +477,7 @@ public class ScanFragment extends Fragment {
             }
             else {
                 updateProgressNum(progress);
-                updateProgressText(getString(R.string.final_proc) + " "
-                                   + mPathScanned);
+                updateProgressText(R.string.final_proc, " " + mPathScanned);
             }
         }
     }

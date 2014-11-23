@@ -1,7 +1,7 @@
 /* SD Scanner - A manual implementation of the SD rescan process, compatible
  * with Android 4.4
  *
- * Copyright (C) 2013 Jeremy Erickson
+ * Copyright (C) 2013-2014 Jeremy Erickson
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,15 +48,15 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void updateProgressText(String progressText) {
+    public void updateProgressText(UIStringGenerator progressText) {
         TextView progressLabel = (TextView)findViewById(R.id.progress_label);
-        progressLabel.setText(progressText);
+        progressLabel.setText(progressText.toString(this));
     }
 
     @Override
-    public void updateDebugMessages(String debugMessages) {
+    public void updateDebugMessages(UIStringGenerator debugMessages) {
         TextView debugLabel = (TextView)findViewById(R.id.debug_label);
-        debugLabel.setText(debugMessages);
+        debugLabel.setText(debugMessages.toString(this));
     }
 
     @Override
