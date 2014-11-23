@@ -19,6 +19,7 @@ package com.gmail.jerickson314.sdscanner;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -70,6 +71,13 @@ public class MainActivity extends Activity
         startButton.setEnabled(startButtonEnabled);
     }
 
+    @Override
+    public void signalFinished() {
+        if (getIntent().getAction().equals(Intent.ACTION_RUN)) {
+            finish();
+        }
+    }
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -108,6 +116,21 @@ public class MainActivity extends Activity
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+
+        if (!mScanFragment.getHasStarted() &&
+                getIntent().getAction().equals(Intent.ACTION_RUN)) {
+            try {
+                startScan();
+            }
+            catch (IOException ex) {
+                // We currently do nothing.
+            }
+        }
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
 
@@ -125,6 +148,10 @@ public class MainActivity extends Activity
     }
 
     public void startButtonPressed(View view) throws IOException {
+        startScan();
+    }
+
+    public void startScan() throws IOException {
         EditText pathText = (EditText) findViewById(R.id.path_widget);
         File path = new File(pathText.getText().toString());
 

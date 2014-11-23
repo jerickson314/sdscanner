@@ -64,6 +64,7 @@ public class ScanFragment extends Fragment {
     String mProgressText;
     StringBuilder mDebugMessages;
     boolean mStartButtonEnabled;
+    boolean mHasStarted = false;
 
     /**
      * Callback interface used by the fragment to update the Activity.
@@ -74,6 +75,7 @@ public class ScanFragment extends Fragment {
         void updateDebugMessages(String debugMessages);
         void updatePath(String path);
         void updateStartButtonEnabled(boolean startButtonEnabled);
+        void signalFinished();
     }
 
     private ScanProgressCallbacks mCallbacks;
@@ -113,6 +115,12 @@ public class ScanFragment extends Fragment {
         }
     }
 
+    private void signalFinished() {
+        if (mCallbacks != null) {
+            mCallbacks.signalFinished();
+        }
+    }
+
     public int getProgressNum() {
         return mProgressNum;
     }
@@ -127,6 +135,10 @@ public class ScanFragment extends Fragment {
 
     public boolean getStartButtonEnabled() {
         return mStartButtonEnabled;
+    }
+
+    public boolean getHasStarted() {
+        return mHasStarted;
     }
 
     @Override
@@ -167,6 +179,7 @@ public class ScanFragment extends Fragment {
         updateProgressNum(0);
         updateProgressText(getString(R.string.progress_completed_label));
         updateStartButtonEnabled(true);
+        signalFinished();
     }
 
     public void startMediaScanner(){
@@ -188,6 +201,7 @@ public class ScanFragment extends Fragment {
     }
 
     public void startScan(File path) {
+        mHasStarted = true;
         updateStartButtonEnabled(false);
         updateProgressText(getString(R.string.progress_filelist_label));
         mFilesToProcess = new TreeSet<File>();
@@ -198,6 +212,7 @@ public class ScanFragment extends Fragment {
         else {
             updateProgressText(getString(R.string.progress_error_bad_path_label));
             updateStartButtonEnabled(true);
+            signalFinished();
         }
     }
 
