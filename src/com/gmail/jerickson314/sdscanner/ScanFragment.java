@@ -61,7 +61,8 @@ public class ScanFragment extends Fragment {
     private Handler mHandler = new Handler();
 
     int mProgressNum;
-    UIStringGenerator mProgressText = new UIStringGenerator();
+    UIStringGenerator mProgressText =
+            new UIStringGenerator(R.string.progress_unstarted_label);
     UIStringGenerator mDebugMessages = new UIStringGenerator();
     boolean mStartButtonEnabled;
     boolean mHasStarted = false;
@@ -177,7 +178,6 @@ public class ScanFragment extends Fragment {
 
         // Retain this fragment across configuration changes.
         setRetainInstance(true);
-        updateProgressText(R.string.progress_unstarted_label);
     }
 
     // Purely for debugging and not normally used, so does not translate
