@@ -36,6 +36,11 @@
         android:paddingBottom="4dp"
         android:gravity="center_vertical"
         android:text="@string/db_label" />
+    <CheckBox
+        android:id="@+id/restrict_checkbox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/restrict_label" />
     <Button
         android:id="@+id/start_button"
         android:layout_width="match_parent"

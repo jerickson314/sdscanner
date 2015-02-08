@@ -71,6 +71,11 @@ public class MainActivity extends Activity
         startButton.setEnabled(startButtonEnabled);
     }
 
+    public void updateRestrictCheckboxChecked(boolean checked) {
+        CheckBox restrictCheckbox = (CheckBox) findViewById(R.id.restrict_checkbox);
+        restrictCheckbox.setChecked(checked);
+    }
+
     @Override
     public void signalFinished() {
         if (getIntent().getAction().equals(Intent.ACTION_RUN)) {
@@ -104,10 +109,13 @@ public class MainActivity extends Activity
         try {
             updatePath(preferences.getString("path",
                  Environment.getExternalStorageDirectory().getCanonicalPath()));
+            updateRestrictCheckboxChecked(preferences.getBoolean(
+                 "restrict_db_scan", false));
         }
         catch (IOException Ex) {
             // Should never happen, but getCanonicalPath() declares the throw.
             updatePath("");
+            updateRestrictCheckboxChecked(false);
         }
 
         // Make debug output scrollable.
@@ -136,10 +144,12 @@ public class MainActivity extends Activity
 
         // Write setting to preferences
         EditText pathText = (EditText) findViewById(R.id.path_widget);
+        CheckBox restrictCheckbox = (CheckBox) findViewById(R.id.restrict_checkbox);
 
         SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("path", pathText.getText().toString());
+        editor.putBoolean("restrict_db_scan", restrictCheckbox.isChecked());
         editor.commit();
     }
 
@@ -154,8 +164,9 @@ public class MainActivity extends Activity
     public void startScan() throws IOException {
         EditText pathText = (EditText) findViewById(R.id.path_widget);
         File path = new File(pathText.getText().toString());
+        CheckBox restrictCheckbox = (CheckBox) findViewById(R.id.restrict_checkbox);
 
-        mScanFragment.startScan(path.getCanonicalFile());
+        mScanFragment.startScan(path.getCanonicalFile(), restrictCheckbox.isChecked());
     }
 
 }

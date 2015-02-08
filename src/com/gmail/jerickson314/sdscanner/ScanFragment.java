@@ -220,14 +220,14 @@ public class ScanFragment extends Fragment {
         }
     }
 
-    public void startScan(File path) {
+    public void startScan(File path, boolean restrictDbUpdate) {
         mHasStarted = true;
         updateStartButtonEnabled(false);
         updateProgressText(R.string.progress_filelist_label);
         mFilesToProcess = new TreeSet<File>();
         resetDebugMessages();
         if (path.exists()) {
-            this.new PreprocessTask().execute(path);
+            this.new PreprocessTask().execute(new ScanParameters(path, restrictDbUpdate));
         }
         else {
             updateProgressText(R.string.progress_error_bad_path_label);
@@ -291,7 +291,36 @@ public class ScanFragment extends Fragment {
         return new ProgressUpdate(ProgressUpdate.Type.STATE, resId, "", 0);
     }
 
-    class PreprocessTask extends AsyncTask<File, ProgressUpdate, Void> {
+    static class ScanParameters {
+        File mPath;
+        boolean mRestrictDbUpdate;
+
+        public ScanParameters(File path, boolean restrictDbUpdate) {
+            mPath = path;
+            mRestrictDbUpdate = restrictDbUpdate;
+        }
+
+        public File getPath() {
+            return mPath;
+        }
+
+        public boolean shouldScan(File file) {
+            if (!mRestrictDbUpdate) {
+                return true;
+            }
+            while (file != null) {
+                if (file.equals(mPath)) {
+                    return true;
+                }
+                file = file.getParentFile();
+            }
+            // If we fell through here, got up to root without encountering the
+            // path to scan.
+            return false;
+        }
+    }
+
+    class PreprocessTask extends AsyncTask<ScanParameters, ProgressUpdate, Void> {
 
         private void recursiveAddFiles(File file)
                 throws IOException {
@@ -332,7 +361,7 @@ public class ScanFragment extends Fragment {
             }
         }
 
-        protected void dbOneTry() {
+        protected void dbOneTry(ScanParameters parameters) {
             Cursor cursor = mApplicationContext.getContentResolver().query(
                     MediaStore.Files.getContentUri("external"),
                     MEDIA_PROJECTION,
@@ -353,9 +382,10 @@ public class ScanFragment extends Fragment {
                 currentItem++;
                 try {
                     File file = new File(cursor.getString(data_column)).getCanonicalFile();
-                    if (!file.exists() ||
+                    if ((!file.exists() ||
                              file.lastModified() / 1000L >
-                             cursor.getLong(modified_column)) {
+                             cursor.getLong(modified_column))
+                             && parameters.shouldScan(file)) {
                         // Media scanner handles these cases.
                         // Is a set, so OK if already present.
                         mFilesToProcess.add(file);
@@ -385,9 +415,9 @@ public class ScanFragment extends Fragment {
         }
 
         @Override
-        protected Void doInBackground(File... files) {
+        protected Void doInBackground(ScanParameters... parameters) {
             try {
-                recursiveAddFiles(files[0].getCanonicalFile());
+                recursiveAddFiles(parameters[0].getPath());
             }
             catch (IOException Ex) {
                 // Do nothing.
@@ -399,7 +429,7 @@ public class ScanFragment extends Fragment {
             while (!dbSuccess && numRetries < DB_RETRIES) {
                 dbSuccess = true;
                 try {
-                    dbOneTry();
+                    dbOneTry(parameters[0]);
                 }
                 catch (Exception Ex) {
                     // For any of these errors, try again.

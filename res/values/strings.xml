@@ -15,6 +15,7 @@
     <string name="progress_filelist_label">Preparing initial list of files...</string>
     <string name="progress_database_label">Querying database...</string>
     <string name="progress_unstarted_label">Not yet started.</string>
+    <string name="restrict_label">Ignore updated and deleted files outside scanned directory.</string>
     <string name="skipping_folder_label">Encountered an error and skipping</string>
     <string name="title_activity_main">SD Scanner</string>
 </resources>
