@@ -54,6 +54,8 @@ public class ScanFragment extends Fragment {
 
     private static final int DB_RETRIES = 3;
 
+    Context mApplicationContext;
+
     ArrayList<String> mPathNames;
     TreeSet<File> mFilesToProcess;
     int mLastGoodProcessedIndex;
@@ -162,6 +164,7 @@ public class ScanFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mCallbacks = (ScanProgressCallbacks) activity;
+        mApplicationContext = activity.getApplicationContext();
     }
 
     public ScanFragment() {
@@ -206,7 +209,7 @@ public class ScanFragment extends Fragment {
         }
         else {
             MediaScannerConnection.scanFile(
-                getActivity().getApplicationContext(),
+                mApplicationContext,
                 mPathNames.toArray(new String[mPathNames.size()]),
                 null,
                 new MediaScannerConnection.OnScanCompletedListener() {
@@ -330,7 +333,7 @@ public class ScanFragment extends Fragment {
         }
 
         protected void dbOneTry() {
-            Cursor cursor = getActivity().getContentResolver().query(
+            Cursor cursor = mApplicationContext.getContentResolver().query(
                     MediaStore.Files.getContentUri("external"),
                     MEDIA_PROJECTION,
                     //STAR,
