@@ -304,8 +304,18 @@ public class ScanFragment extends Fragment {
             return mPath;
         }
 
-        public boolean shouldScan(File file) {
-            if (!mRestrictDbUpdate) {
+        public boolean shouldScan(File file, boolean fromDb)
+                throws IOException {
+            // Empty directory check.
+            if (file.isDirectory()) {
+                File[] files = file.listFiles();
+                if (files == null || files.length == 0) {
+                    Log.w("SDScanner", "Scan of empty directory " +
+                          file.getCanonicalPath() + " skipped to avoid bug.");
+                    return false;
+                }
+            }
+            if (!mRestrictDbUpdate && fromDb) {
                 return true;
             }
             while (file != null) {
@@ -316,19 +326,21 @@ public class ScanFragment extends Fragment {
             }
             // If we fell through here, got up to root without encountering the
             // path to scan.
+            if (!fromDb) {
+                Log.w("SDScanner", "File " + file.getCanonicalPath() +
+                      " outside of scan directory skipped.");
+            }
             return false;
         }
     }
 
     class PreprocessTask extends AsyncTask<ScanParameters, ProgressUpdate, Void> {
 
-        private void recursiveAddFiles(File file)
+        private void recursiveAddFiles(File file, ScanParameters scanParameters)
                 throws IOException {
-            if (file.equals(new File("/storage")) ||
-                    file.equals(new File("/system"))) {
-                // Don't scan a symlink that gives you all of "/storage" or
-                // "/system".  May be dangerous!
-                Log.w("SDScanner", "Skipping scan of " + file.toString());
+            if (!scanParameters.shouldScan(file, false)) {
+                // If we got here, there file was either outside the scan
+                // directory, or was an empty directory.
                 return;
             }
             if (!mFilesToProcess.add(file)) {
@@ -338,18 +350,14 @@ public class ScanFragment extends Fragment {
                 return;
             }
             if (file.isDirectory()) {
-                // Debug check.
-                if (new File(file, "emulated").exists()) {
-                    Log.w("SDScanner", "Path " + file.getCanonicalPath() +
-                          " contains 'emulated' and might be /storage");
-                }
                 boolean nomedia = new File(file, ".nomedia").exists();
                 // Only recurse downward if not blocked by nomedia.
                 if (!nomedia) {
                     File[] files = file.listFiles();
                     if (files != null) {
                         for (File nextFile : files) {
-                            recursiveAddFiles(nextFile.getCanonicalFile());
+                            recursiveAddFiles(nextFile.getCanonicalFile(),
+                                              scanParameters);
                         }
                     }
                     else {
@@ -385,7 +393,7 @@ public class ScanFragment extends Fragment {
                     if ((!file.exists() ||
                              file.lastModified() / 1000L >
                              cursor.getLong(modified_column))
-                             && parameters.shouldScan(file)) {
+                             && parameters.shouldScan(file, true)) {
                         // Media scanner handles these cases.
                         // Is a set, so OK if already present.
                         mFilesToProcess.add(file);
@@ -417,7 +425,7 @@ public class ScanFragment extends Fragment {
         @Override
         protected Void doInBackground(ScanParameters... parameters) {
             try {
-                recursiveAddFiles(parameters[0].getPath());
+                recursiveAddFiles(parameters[0].getPath(), parameters[0]);
             }
             catch (IOException Ex) {
                 // Do nothing.
