@@ -226,11 +226,22 @@ public class ScanFragment extends Fragment {
         updateProgressText(R.string.progress_filelist_label);
         mFilesToProcess = new TreeSet<File>();
         resetDebugMessages();
+        int progMsg = -1;
         if (path.exists()) {
-            this.new PreprocessTask().execute(new ScanParameters(path, restrictDbUpdate));
+            File nomediaFile = new File(path.getPath(), ".nomedia");
+            if ( nomediaFile.exists() ) {
+                progMsg = R.string.progress_error_nomedia_in_root;
+            }
+            else {
+                this.new PreprocessTask().execute(new ScanParameters(path, restrictDbUpdate));
+            }
         }
         else {
-            updateProgressText(R.string.progress_error_bad_path_label);
+            progMsg = R.string.progress_error_bad_path_label;
+        }
+
+        if (progMsg != -1) {
+            updateProgressText(progMsg);
             updateStartButtonEnabled(true);
             signalFinished();
         }
