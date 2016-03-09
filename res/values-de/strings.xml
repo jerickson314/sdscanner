@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SD-Scanner</string>
+    <string name="button_start">Scan starten</string>
+    <string name="database_proc">Untersucht:</string>
+    <string name="db_label">Es wird auch die existierende Mediendatenbank nach geänderten oder gelöschten Dateien durchsucht.</string>
+    <string name="db_error_failure">Fehler beim Lesen der Mediendatenbank. Möglicherweise werden einige geänderte oder gelöschte Dateien ausgelassen, oder aktuelle Dateien neu gescannt.</string>
+    <string name="db_error_recovered">Fehler beim Lesen der Mediendatenbank, sie konnte aber wiederhergestellt werden.</string>
+    <string name="db_error_retrying">Fehler beim Lesen der Mediendatenbank.  Erneuter Versuch in 1 Sekunde …</string>
+    <string name="final_proc">Bearbeitet:</string>
+    <string name="path_label">Ort, an dem nach neuen Dateien gesucht werden soll:</string>
+    <string name="progress_completed_label">Scan beendet. Ein neuer Scan kann nun gestartet werden.</string>
+    <string name="progress_error_bad_path_label">Scan fehlgeschlagen: Ungültiger Ort für die Suche angegeben.</string>
+    <string name="progress_filelist_label">Anfangsdateiliste wird erzeugt …</string>
+    <string name="progress_database_label">Datenbank wird abgefragt …</string>
+    <string name="progress_unstarted_label">Scan noch nicht gestartet</string>
+    <string name="restrict_label">Geänderte und gelöschte Dateien außerhalb des angegebenen Ortes ignorieren</string>
+    <string name="skipping_folder_label">Fehler aufgetreten, Ordner wird übersprungen:</string>
+    <string name="title_activity_main">SD-Scanner</string>
+</resources>
