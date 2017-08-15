@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SD Scanner</string>
+    <string name="button_start">Escanear</string>
+    <string name="database_proc">Examinado</string>
+    <string name="delete_proc">Eliminada referencia a</string>
+    <string name="db_label">También se comprobará si los archivos de la base de datos de medios han sido actualizados o eliminados.</string>
+    <string name="db_error_failure">Se encontró un error leyendo la base de datos de medios, y se podría haber perdido información sobre archivos actualizados, eliminados o al día.</string>
+    <string name="db_error_recovered">Se encontró un error leyendo la base de datos de medios pero se ha recuperado.</string>
+    <string name="db_error_retrying">Se encontró un error leyendo la base de datos. Intentando de nuevo en 1 segundo...</string>
+    <string name="final_proc">Procesado</string>
+    <string name="path_label">Ubicación para buscar archivos nuevos:</string>
+    <string name="progress_completed_label">Completado, listo para iniciar otro escaneo.</string>
+    <string name="progress_error_bad_path_label">El escaneo de archivos falló: error en la ubicación especificada para buscar archivos nuevos.</string>
+    <string name="progress_filelist_label">Preparando lista inicial de archivos...</string>
+    <string name="progress_database_label">Consultado la base de datos...</string>
+    <string name="progress_unstarted_label">Aun no iniciado.</string>
+    <string name="restrict_label">Ignorar archivos actualizados o eliminados fuera del directorio especificado.</string>
+    <string name="skipping_folder_label">Se encontró un error y se ignora</string>
+    <string name="title_activity_main">SD Scanner</string>
+</resources>
